@@ -1,0 +1,76 @@
+@Innowise.Api_HostAddress = http://localhost:5247
+
+GET {{Innowise.Api_HostAddress}}/health
+Accept: text/plain
+
+###
+
+# Create a paint, then copy its id into paintId below.
+POST {{Innowise.Api_HostAddress}}/api/paints
+Content-Type: application/json
+
+{
+  "name": "Interior Wall White",
+  "brand": "ColorHouse",
+  "description": "Washable white paint for interior walls and ceilings.",
+  "color": "White",
+  "finish": "Matte",
+  "surface": "Wall",
+  "isExterior": false,
+  "volumeLiters": 2.5,
+  "price": 29.99,
+  "stockQuantity": 20
+}
+
+###
+@paintId = 00000000-0000-0000-0000-000000000000
+@basketId = 00000000-0000-0000-0000-000000000000
+
+GET {{Innowise.Api_HostAddress}}/api/paints?search=white%20wall&finish=matte&inStock=true&maxPrice=50&sortBy=price&page=1&pageSize=20
+
+###
+GET {{Innowise.Api_HostAddress}}/api/paints/lookups
+
+###
+GET {{Innowise.Api_HostAddress}}/api/paints/{{paintId}}
+
+###
+PUT {{Innowise.Api_HostAddress}}/api/paints/{{paintId}}
+Content-Type: application/json
+
+{
+  "name": "Interior Wall White",
+  "brand": "ColorHouse",
+  "description": "Washable white paint for interior walls and ceilings.",
+  "color": "White",
+  "finish": "Matte",
+  "surface": "Wall",
+  "isExterior": false,
+  "volumeLiters": 2.5,
+  "price": 24.99,
+  "stockQuantity": 20
+}
+
+### Create a basket, then copy its id into basketId above.
+POST {{Innowise.Api_HostAddress}}/api/baskets
+
+### Add paint or replace its quantity (repeat requests do not increment it).
+PUT {{Innowise.Api_HostAddress}}/api/baskets/{{basketId}}/items/{{paintId}}
+Content-Type: application/json
+
+{"quantity": 2}
+
+###
+GET {{Innowise.Api_HostAddress}}/api/baskets/{{basketId}}
+
+###
+DELETE {{Innowise.Api_HostAddress}}/api/baskets/{{basketId}}/items/{{paintId}}
+
+###
+DELETE {{Innowise.Api_HostAddress}}/api/baskets/{{basketId}}/items
+
+###
+DELETE {{Innowise.Api_HostAddress}}/api/baskets/{{basketId}}
+
+###
+DELETE {{Innowise.Api_HostAddress}}/api/paints/{{paintId}}

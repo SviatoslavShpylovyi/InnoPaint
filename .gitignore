@@ -55,3 +55,27 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# Claude Code
+CLAUDE.md
+CLAUDE.local.md
+.claude/
+.claude/settings.local.json
+.mcp.json
+.superdesign/
+
+# Node / front end
+node_modules/
+dist/
+dist-ssr/
+.vite/
+*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editors
+.vscode/
+.idea/
+*.swp
