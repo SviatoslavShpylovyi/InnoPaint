@@ -1,4 +1,6 @@
 import type { PaintLookups, PaintQuery } from '../api/types'
+import { litres, price } from '../lib/format'
+import { RangeSlider } from './RangeSlider'
 
 interface Props {
   query: PaintQuery
@@ -14,9 +16,15 @@ const DROPDOWNS = [
   { key: 'surface', label: 'Surface', source: 'surfaces' },
 ] as const
 
-export function Filters({ query, lookups, onChange, onReset }: Props) {
-  const number = (value: string) => (value === '' ? undefined : Number(value))
+/**
+ * Slider ends. The catalog endpoint reports no numeric bounds, so these are
+ * shop-floor limits: a thumb at either end drops the filter entirely, which
+ * keeps stock outside the range reachable.
+ */
+const PRICE = { min: 0, max: 200, step: 1 }
+const VOLUME = { min: 0, max: 20, step: 0.5 }
 
+export function Filters({ query, lookups, onChange, onReset }: Props) {
   return (
     <aside className="rail">
       <div className="field">
@@ -48,53 +56,29 @@ export function Filters({ query, lookups, onChange, onReset }: Props) {
         </div>
       ))}
 
-      <div className="field">
-        <label htmlFor="minPrice">Price</label>
-        <div className="pair">
-          <input
-            id="minPrice"
-            type="number"
-            min={0}
-            step="0.01"
-            placeholder="from"
-            value={query.minPrice ?? ''}
-            onChange={(event) => onChange({ minPrice: number(event.target.value) })}
-          />
-          <input
-            type="number"
-            min={0}
-            step="0.01"
-            placeholder="to"
-            aria-label="Maximum price"
-            value={query.maxPrice ?? ''}
-            onChange={(event) => onChange({ maxPrice: number(event.target.value) })}
-          />
-        </div>
-      </div>
+      <RangeSlider
+        label="Price"
+        min={PRICE.min}
+        max={PRICE.max}
+        step={PRICE.step}
+        low={query.minPrice}
+        high={query.maxPrice}
+        format={price}
+        onChange={(minPrice, maxPrice) => onChange({ minPrice, maxPrice })}
+      />
 
-      <div className="field">
-        <label htmlFor="minVolume">Volume in litres</label>
-        <div className="pair">
-          <input
-            id="minVolume"
-            type="number"
-            min={0.01}
-            step="0.001"
-            placeholder="from"
-            value={query.minVolumeLiters ?? ''}
-            onChange={(event) => onChange({ minVolumeLiters: number(event.target.value) })}
-          />
-          <input
-            type="number"
-            min={0.01}
-            step="0.001"
-            placeholder="to"
-            aria-label="Maximum volume"
-            value={query.maxVolumeLiters ?? ''}
-            onChange={(event) => onChange({ maxVolumeLiters: number(event.target.value) })}
-          />
-        </div>
-      </div>
+      <RangeSlider
+        label="Volume"
+        min={VOLUME.min}
+        max={VOLUME.max}
+        step={VOLUME.step}
+        low={query.minVolumeLiters}
+        high={query.maxVolumeLiters}
+        format={litres}
+        onChange={(minVolumeLiters, maxVolumeLiters) =>
+          onChange({ minVolumeLiters, maxVolumeLiters })
+        }
+      />
 
       <div className="toggles">
         <label className="toggle">
@@ -103,6 +87,7 @@ export function Filters({ query, lookups, onChange, onReset }: Props) {
             checked={query.inStock === true}
             onChange={(event) => onChange({ inStock: event.target.checked || undefined })}
           />
+          <span className="switch" aria-hidden="true" />
           In stock only
         </label>
         <label className="toggle">
@@ -111,11 +96,12 @@ export function Filters({ query, lookups, onChange, onReset }: Props) {
             checked={query.isExterior === true}
             onChange={(event) => onChange({ isExterior: event.target.checked || undefined })}
           />
+          <span className="switch" aria-hidden="true" />
           Exterior use
         </label>
       </div>
 
-      <button type="button" className="link" onClick={onReset}>
+      <button type="button" className="btn btn--ghost" onClick={onReset}>
         Clear filters
       </button>
     </aside>

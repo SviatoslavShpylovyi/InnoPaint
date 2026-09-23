@@ -3,6 +3,7 @@ import { ApiError, api } from './api/client'
 import type { Paint, PaintLookups, PaintPage, PaintQuery, SortBy } from './api/types'
 import { FanDeck } from './components/FanDeck'
 import { Filters } from './components/Filters'
+import { Home } from './components/Home'
 import { OrderPanel } from './components/OrderPanel'
 import { PaintChip } from './components/PaintChip'
 import { useBasket } from './hooks/useBasket'
@@ -18,6 +19,7 @@ const SORTS: { value: SortBy; label: string }[] = [
 ]
 
 export default function App() {
+  const [view, setView] = useState<'home' | 'catalog'>('home')
   const [query, setQuery] = useState<PaintQuery>(INITIAL)
   const [results, setResults] = useState<PaintPage | null>(null)
   const [lookups, setLookups] = useState<PaintLookups | null>(null)
@@ -70,116 +72,139 @@ export default function App() {
     <>
       <header className="masthead">
         <h1 className="wordmark">
-          Inno&thinsp;Paint <span>trade counter</span>
+          InnoPaint <span>trade counter</span>
         </h1>
-        <p className="count">
-          {lookups ? `${lookups.colors.length} colours, ${lookups.brands.length} brands` : ' '}
-        </p>
+        <div className="masthead-side">
+          <p className="count">
+            {lookups ? `${lookups.colors.length} colours, ${lookups.brands.length} brands` : ' '}
+          </p>
+          <button
+            type="button"
+            className="btn btn--small"
+            onClick={() => setView(view === 'home' ? 'catalog' : 'home')}
+          >
+            {view === 'home' ? 'Catalogue' : 'Home'}
+          </button>
+        </div>
       </header>
 
-      <FanDeck
-        colors={lookups?.colors ?? []}
-        selected={query.color}
-        onSelect={(color) => patch({ color })}
-      />
-
-      {(searchError || basket.error) && (
-        <p className="alert" role="status">
-          <span>{searchError ?? basket.error}</span>
-          {basket.error && (
-            <button type="button" onClick={basket.dismissError}>
-              Dismiss
-            </button>
-          )}
-        </p>
+      {view === 'home' && (
+        <Home
+          colors={lookups?.colors ?? []}
+          brandCount={lookups?.brands.length ?? 0}
+          onEnter={() => setView('catalog')}
+        />
       )}
 
-      <main className="shell">
-        <Filters
-          query={query}
-          lookups={lookups}
-          onChange={patch}
-          onReset={() => setQuery(INITIAL)}
-        />
+      {view === 'catalog' && (
+        <>
+          <FanDeck
+            colors={lookups?.colors ?? []}
+            selected={query.color}
+            onSelect={(color) => patch({ color })}
+          />
 
-        <section aria-label="Paints">
-          <div className="wall-head">
-            <p className="tally">
-              {results ? `${total} ${total === 1 ? 'paint' : 'paints'}` : 'Loading the catalog'}
+          {(searchError || basket.error) && (
+            <p className="alert" role="status">
+              <span>{searchError ?? basket.error}</span>
+              {basket.error && (
+                <button type="button" className="btn btn--small" onClick={basket.dismissError}>
+                  Dismiss
+                </button>
+              )}
             </p>
-            <div className="sorts">
-              {SORTS.map(({ value, label }) => {
-                const active = query.sortBy === value
-                return (
-                  <button
-                    key={value}
-                    type="button"
-                    className="sort"
-                    aria-pressed={active}
-                    onClick={() =>
-                      patch(
-                        active
-                          ? { descending: !query.descending }
-                          : { sortBy: value, descending: false },
-                      )
-                    }
-                  >
-                    {label}
-                    {active && (query.descending ? ' ↓' : ' ↑')}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          <div className="wall">
-            {results?.items.map((paint) => (
-              <PaintChip
-                key={paint.id}
-                paint={paint}
-                inOrder={quantities.get(paint.id) ?? 0}
-                busy={basket.pendingPaintId === paint.id}
-                onAdd={addOne}
-              />
-            ))}
-            {results?.items.length === 0 && (
-              <p className="wall-empty">
-                No paint matches those filters. Widen the price range or clear a filter.
-              </p>
-            )}
-          </div>
-
-          {lastPage > 1 && (
-            <nav className="pager" aria-label="Pages">
-              <button
-                type="button"
-                disabled={page <= 1}
-                onClick={() => setQuery((q) => ({ ...q, page: page - 1 }))}
-              >
-                Previous
-              </button>
-              <span>
-                Page {page} of {lastPage}
-              </span>
-              <button
-                type="button"
-                disabled={page >= lastPage}
-                onClick={() => setQuery((q) => ({ ...q, page: page + 1 }))}
-              >
-                Next
-              </button>
-            </nav>
           )}
-        </section>
 
-        <OrderPanel
-          basket={basket.basket}
-          pendingPaintId={basket.pendingPaintId}
-          onSetQuantity={basket.setQuantity}
-          onRemove={basket.remove}
-          onClear={basket.clear}
-        />
-      </main>
+          <main className="shell">
+            <Filters
+              query={query}
+              lookups={lookups}
+              onChange={patch}
+              onReset={() => setQuery(INITIAL)}
+            />
+
+            <section aria-label="Paints">
+              <div className="wall-head">
+                <p className="tally">
+                  {results ? `${total} ${total === 1 ? 'paint' : 'paints'}` : 'Loading the catalog'}
+                </p>
+                <div className="sorts">
+                  {SORTS.map(({ value, label }) => {
+                    const active = query.sortBy === value
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        className="btn btn--small"
+                        aria-pressed={active}
+                        onClick={() =>
+                          patch(
+                            active
+                              ? { descending: !query.descending }
+                              : { sortBy: value, descending: false },
+                          )
+                        }
+                      >
+                        {label}
+                        {active && (query.descending ? ' ↓' : ' ↑')}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div className="wall">
+                {results?.items.map((paint) => (
+                  <PaintChip
+                    key={paint.id}
+                    paint={paint}
+                    inOrder={quantities.get(paint.id) ?? 0}
+                    busy={basket.pendingPaintId === paint.id}
+                    onAdd={addOne}
+                  />
+                ))}
+                {results?.items.length === 0 && (
+                  <p className="wall-empty">
+                    No paint matches those filters. Widen the price range or clear a filter.
+                  </p>
+                )}
+              </div>
+
+              {lastPage > 1 && (
+                <nav className="pager" aria-label="Pages">
+                  <button
+                    type="button"
+                    className="btn btn--small"
+                    disabled={page <= 1}
+                    onClick={() => setQuery((q) => ({ ...q, page: page - 1 }))}
+                  >
+                    Previous
+                  </button>
+                  <span>
+                    Page {page} of {lastPage}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn btn--small"
+                    disabled={page >= lastPage}
+                    onClick={() => setQuery((q) => ({ ...q, page: page + 1 }))}
+                  >
+                    Next
+                  </button>
+                </nav>
+              )}
+            </section>
+
+            <OrderPanel
+              basket={basket.basket}
+              pendingPaintId={basket.pendingPaintId}
+              onSetQuantity={basket.setQuantity}
+              onRemove={basket.remove}
+              onClear={basket.clear}
+            />
+          </main>
+        </>
+      )}
     </>
   )
 }

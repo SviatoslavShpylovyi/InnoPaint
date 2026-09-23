@@ -18,7 +18,7 @@ export function OrderPanel({ basket, pendingPaintId, onSetQuantity, onRemove, on
       <div className="order-head">
         <h2>Your order</h2>
         {lines.length > 0 && (
-          <button type="button" className="link" onClick={onClear}>
+          <button type="button" className="btn btn--ghost btn--small" onClick={onClear}>
             Empty it
           </button>
         )}
@@ -42,7 +42,7 @@ export function OrderPanel({ basket, pendingPaintId, onSetQuantity, onRemove, on
                   <div className="line-controls">
                     <button
                       type="button"
-                      className="step"
+                      className="btn btn--icon"
                       aria-label={`One fewer ${paint.name}`}
                       disabled={busy}
                       onClick={() =>
@@ -54,7 +54,7 @@ export function OrderPanel({ basket, pendingPaintId, onSetQuantity, onRemove, on
                     <span className="qty">{quantity}</span>
                     <button
                       type="button"
-                      className="step"
+                      className="btn btn--icon btn--accent"
                       aria-label={`One more ${paint.name}`}
                       disabled={busy || quantity >= paint.stockQuantity}
                       onClick={() => onSetQuantity(paint.id, quantity + 1)}

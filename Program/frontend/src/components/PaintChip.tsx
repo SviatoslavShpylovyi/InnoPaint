@@ -40,7 +40,7 @@ export function PaintChip({ paint, inOrder, busy, onAdd }: Props) {
 
           <button
             type="button"
-            className={inOrder > 0 ? 'add in' : 'add'}
+            className={inOrder > 0 ? 'btn btn--violet btn--small' : 'btn btn--accent btn--small'}
             disabled={soldOut || maxed || busy}
             onClick={() => onAdd(paint)}
           >
