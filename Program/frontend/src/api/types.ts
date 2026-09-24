@@ -65,3 +65,20 @@ export interface PaintQuery {
 
 /** Body for POST/PUT /api/paints. */
 export type PaintRequest = Omit<Paint, 'id'>
+
+// Mirrors src/Innowise.Api/Assistant/AssistantContracts.cs.
+
+/** One paint the assistant recommends, with its job in the scheme. */
+export interface PaletteItem {
+  paint: Paint
+  role: string
+  reason: string
+}
+
+/** Reply to POST /api/assistant/messages. `palette` is empty on a turn where
+ *  the assistant only asked a follow-up question. */
+export interface AssistantReply {
+  conversationId: string
+  message: string
+  palette: PaletteItem[]
+}

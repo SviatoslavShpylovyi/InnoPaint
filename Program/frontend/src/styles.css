@@ -871,6 +871,307 @@ select {
   letter-spacing: 0.05em;
 }
 
+/* ---------- palette assistant ----------
+
+   A comic speech bubble parked bottom right. Outlined tails are two stacked
+   triangles: an ink one, then a slightly smaller fill-coloured one on top, so
+   the tail reads as drawn with the same 3px pen as everything else. */
+
+.assistant-launcher {
+  position: fixed;
+  right: var(--gap);
+  bottom: calc(var(--gap) + 14px);
+  z-index: 40;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.assistant-launcher::before,
+.assistant-launcher::after {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left-style: solid;
+  border-left-color: transparent;
+}
+
+.assistant-launcher::before {
+  right: 16px;
+  bottom: -17px;
+  border-left-width: 18px;
+  border-top: 17px solid var(--ink);
+}
+
+.assistant-launcher::after {
+  right: 21px;
+  bottom: -9px;
+  border-left-width: 12px;
+  border-top: 12px solid var(--accent);
+}
+
+.assistant {
+  position: fixed;
+  right: var(--gap);
+  bottom: calc(var(--gap) + 18px);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  width: min(360px, calc(100vw - 2 * var(--gap)));
+  max-height: min(560px, calc(100vh - 2 * var(--gap) - 18px));
+  background: var(--card);
+  border: var(--edge) solid var(--ink);
+  box-shadow: 8px 8px 0 var(--ink);
+  animation: settle 220ms ease-out;
+}
+
+.assistant::before,
+.assistant::after {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left-style: solid;
+  border-left-color: transparent;
+}
+
+.assistant::before {
+  right: 30px;
+  bottom: -22px;
+  border-left-width: 26px;
+  border-top: 22px solid var(--ink);
+}
+
+/* Overlaps the panel's own bottom border so the tail opens into the bubble. */
+.assistant::after {
+  right: 34px;
+  bottom: -13px;
+  border-left-width: 19px;
+  border-top: 16px solid var(--card);
+}
+
+.assistant-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 11px;
+  background: var(--accent-2);
+  color: #ffffff;
+  border-bottom: var(--edge) solid var(--ink);
+}
+
+.assistant-head h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.assistant-head-side {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.assistant-log {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding: 12px 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ---------- messages ---------- */
+
+.assistant-msg {
+  position: relative;
+  max-width: 86%;
+  margin: 0;
+  padding: 8px 10px;
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: pre-wrap;
+}
+
+.assistant-msg::before,
+.assistant-msg::after {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-top-style: solid;
+}
+
+.assistant-msg--bot {
+  align-self: flex-start;
+  background: var(--paper);
+}
+
+.assistant-msg--bot::before {
+  left: 12px;
+  bottom: -11px;
+  border-right: 13px solid transparent;
+  border-top-width: 11px;
+  border-top-color: var(--ink);
+}
+
+.assistant-msg--bot::after {
+  left: 15px;
+  bottom: -5px;
+  border-right: 8px solid transparent;
+  border-top-width: 7px;
+  border-top-color: var(--paper);
+}
+
+.assistant-msg--user {
+  align-self: flex-end;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+}
+
+.assistant-msg--user::before {
+  right: 12px;
+  bottom: -11px;
+  border-left: 13px solid transparent;
+  border-top-width: 11px;
+  border-top-color: var(--ink);
+}
+
+.assistant-msg--user::after {
+  right: 15px;
+  bottom: -5px;
+  border-left: 8px solid transparent;
+  border-top-width: 7px;
+  border-top-color: var(--accent);
+}
+
+.assistant-msg--wait {
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 12px;
+}
+
+/* ---------- the recommendation ---------- */
+
+.assistant-palette {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.assistant-pick {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 10px;
+  padding: 9px;
+  background: var(--card);
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  animation: settle 200ms ease-out;
+}
+
+.assistant-swatch {
+  height: 38px;
+  border: 2px solid var(--ink);
+}
+
+.assistant-pick-body > * {
+  margin: 0;
+}
+
+.assistant-role {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.assistant-pick-name {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.assistant-reason {
+  margin-top: 3px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.assistant-pick-meta {
+  margin: 5px 0 7px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ---------- foot ---------- */
+
+.assistant-error {
+  margin: 0 12px 10px;
+  padding: 8px 10px;
+  background: var(--card);
+  border: 2px solid var(--warning);
+  box-shadow: 2px 2px 0 var(--warning);
+  color: var(--warning);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.assistant-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 8px;
+  padding: 10px 12px 12px;
+  border-top: var(--edge) solid var(--ink);
+}
+
+.assistant-label {
+  grid-column: 1 / -1;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.assistant-box {
+  /* Same intrinsic min-width trap as the filter inputs. */
+  min-width: 0;
+  width: 100%;
+  padding: 7px 8px;
+  background: var(--paper);
+  color: var(--ink);
+  border: var(--edge) solid var(--ink);
+  border-radius: 0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  resize: none;
+}
+
+.assistant-box:focus {
+  background: var(--card);
+}
+
+.assistant-send {
+  height: 36px;
+}
+
 /* ---------- responsive ---------- */
 
 @media (max-width: 1080px) {
@@ -904,6 +1205,14 @@ select {
   .hero-strip span:nth-child(n + 7) {
     display: none;
   }
+  /* One column here, and .order goes static: the bubble would sit on top of the
+     order panel's own Add buttons, so it stays narrow and easy to shut. */
+  .assistant {
+    left: var(--gap);
+    width: auto;
+    max-height: min(70vh, calc(100vh - 2 * var(--gap) - 18px));
+    box-shadow: var(--shadow);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -917,5 +1226,9 @@ select {
   .btn:active:not(:disabled),
   .chip:hover {
     translate: none;
+  }
+  .assistant,
+  .assistant-pick {
+    animation: none;
   }
 }

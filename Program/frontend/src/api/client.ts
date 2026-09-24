@@ -1,5 +1,5 @@
 import type {
-  BasketView, Paint, PaintLookups, PaintPage, PaintQuery, PaintRequest,
+  AssistantReply, BasketView, Paint, PaintLookups, PaintPage, PaintQuery, PaintRequest,
 } from './types'
 
 /**
@@ -96,4 +96,14 @@ export const api = {
 
   deleteBasket: (basketId: string) =>
     request<void>(`/api/baskets/${basketId}`, { method: 'DELETE' }),
+
+  /**
+   * Omit `conversationId` to start a conversation. The server keeps history for
+   * 30 minutes; a stale id answers 404 and the caller must start over.
+   */
+  sendAssistantMessage: (message: string, conversationId?: string) =>
+    request<AssistantReply>('/api/assistant/messages', {
+      method: 'POST',
+      body: JSON.stringify({ message, conversationId }),
+    }),
 }

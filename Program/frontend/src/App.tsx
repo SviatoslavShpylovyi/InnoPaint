@@ -6,6 +6,7 @@ import { Filters } from './components/Filters'
 import { Home } from './components/Home'
 import { OrderPanel } from './components/OrderPanel'
 import { PaintChip } from './components/PaintChip'
+import { PaletteAssistant } from './components/PaletteAssistant'
 import { useBasket } from './hooks/useBasket'
 
 const PAGE_SIZE = 24
@@ -203,6 +204,12 @@ export default function App() {
               onClear={basket.clear}
             />
           </main>
+
+          <PaletteAssistant
+            onAdd={addOne}
+            orderBusy={basket.pendingPaintId !== null}
+            quantities={quantities}
+          />
         </>
       )}
     </>
