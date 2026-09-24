@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Innowise.Api/Innowise.Api.csproj" />
+  <Project Path="Innowise.Application/Innowise.Application.csproj" />
+  <Project Path="Innowise.Domain/Innowise.Domain.csproj" />
+  <Project Path="Innowise.Infrastructure/Innowise.Infrastructure.csproj" />
+</Solution>
