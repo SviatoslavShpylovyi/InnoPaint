@@ -79,3 +79,9 @@ pnpm-debug.log*
 .vscode/
 .idea/
 *.swp
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+crash.log
