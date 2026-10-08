@@ -1,5 +1,6 @@
 using BuildingBlocks.AspNetCore.Extensions;
 using BuildingBlocks.AspNetCore.Validation;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using OpenAI.Chat;
@@ -57,9 +58,18 @@ builder.Services.AddControllers(options =>
 builder.Services.AddGlobalExceptionHandling();
 builder.Services.AddRequestValidation(typeof(CreatePaintRequestValidator).Assembly);
 builder.Services.AddHealthChecks().AddDbContextCheck<InnoPaintDbContext>();
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor
+        | ForwardedHeaders.XForwardedProto
+        | ForwardedHeaders.XForwardedHost;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 var app = builder.Build();
 
+app.UseForwardedHeaders();
 app.UseGlobalExceptionHandling();
 
 app.MapControllers();

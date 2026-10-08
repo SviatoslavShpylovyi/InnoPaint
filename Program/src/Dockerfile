@@ -42,8 +42,6 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0.12 AS api
 WORKDIR /app
 COPY --from=build /app/publish .
 ENV ASPNETCORE_HTTP_PORTS=8080
-# TLS ends at the proxy; trust its X-Forwarded-For/-Proto headers.
-ENV ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
 EXPOSE 8080
 USER $APP_UID
 ENTRYPOINT ["dotnet", "Innowise.Api.dll"]
