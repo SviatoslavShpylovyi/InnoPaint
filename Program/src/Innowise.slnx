@@ -1,4 +1,6 @@
 <Solution>
+  <Project Path="BuildingBlocks/BuildingBlocks/BuildingBlocks.csproj" />
+  <Project Path="BuildingBlocks/BuildingBlocks.AspNetCore/BuildingBlocks.AspNetCore.csproj" />
   <Project Path="Innowise.Api/Innowise.Api.csproj" />
   <Project Path="Innowise.Application/Innowise.Application.csproj" />
   <Project Path="Innowise.Domain/Innowise.Domain.csproj" />

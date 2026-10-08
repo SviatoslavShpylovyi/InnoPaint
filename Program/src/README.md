@@ -7,18 +7,21 @@ ASP.NET Core Web API starter using Clean Architecture and .NET 10.
 ```text
 src/
   Innowise.slnx
-  Innowise.Domain/          # Entities, value objects, business rules
-  Innowise.Application/     # Use cases and interfaces for external services
-  Innowise.Infrastructure/  # Persistence and external service implementations
+  BuildingBlocks/
+    BuildingBlocks/               # Shared exception family, no ASP.NET dependency
+    BuildingBlocks.AspNetCore/    # Exception handler, validation filter, DI extensions
+  Innowise.Domain/          # Models/ - entities and business rules
+  Innowise.Application/     # DTOs/, Interfaces/, Services/, Mappings/, Validators/, Exceptions/
+  Innowise.Infrastructure/  # Data/, Repositories/, Migrations/, Concurrency/
   Innowise.Api/             # HTTP controllers, middleware, dependency injection
 ```
 
 Project dependencies point inward:
 
 ```text
-Application -> Domain
+Application -> Domain + BuildingBlocks
 Infrastructure -> Application -> Domain
-Api -> Application + Infrastructure
+Api -> Application + Infrastructure + BuildingBlocks.AspNetCore
 ```
 
 Domain has no project or package dependencies. Define use cases and their
@@ -27,11 +30,20 @@ Infrastructure. Register implementations in the API's `Program.cs`, which is
 the composition root. Controllers should delegate business operations to
 Application services.
 
-The paint store uses a singleton application service and an EF Core repository
-backed by the MySQL database `Inno-Paint` (provider `MySql.EntityFrameworkCore`).
-The catalog starts empty; paints and baskets persist across restarts. No
-authentication is configured. Prices use a single, store-defined currency, are
-stored with 2 decimal places (volumes with 3), and totals exclude tax and shipping.
+The paint store uses scoped application services (`IPaintService`,
+`IBasketService`) over one repository per aggregate (`IPaintRepository`,
+`IBasketRepository`), backed by the MySQL database `Inno-Paint` (provider
+`MySql.EntityFrameworkCore`). Check-then-write operations run in a transaction
+and take a `SELECT ... FOR UPDATE` row lock on the paint, so stock invariants
+hold across API instances. The catalog starts empty; paints and baskets
+persist across restarts. No authentication is configured. Prices use a single,
+store-defined currency, are stored with 2 decimal places (volumes with 3), and
+totals exclude tax and shipping.
+
+Request bodies and query strings are validated by FluentValidation validators in
+`Innowise.Application/Validators/`, run by a global action filter. Domain errors
+are typed exceptions derived from `AppException`; one `IExceptionHandler` turns
+them into Problem Details.
 
 ## Run
 

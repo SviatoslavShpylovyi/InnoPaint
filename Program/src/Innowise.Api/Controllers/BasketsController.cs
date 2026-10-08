@@ -1,43 +1,67 @@
-using Innowise.Application;
 using Microsoft.AspNetCore.Mvc;
+
+using Innowise.Application.DTOs.Requests;
+using Innowise.Application.DTOs.Responses;
+using Innowise.Application.Interfaces;
 
 namespace Innowise.Api.Controllers;
 
 [ApiController]
 [Route("api/baskets")]
-public sealed class BasketsController(PaintStoreService store) : ControllerBase
+public sealed class BasketsController : ControllerBase
 {
-    [HttpPost]
-    public ActionResult<BasketView> Create()
+    private readonly IBasketService _basketService;
+
+    public BasketsController(IBasketService basketService)
     {
-        var basket = store.CreateBasket();
-        return CreatedAtAction(nameof(Get), new { id = basket.Id }, basket);
+        _basketService = basketService;
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<BasketResponse>> Create(CancellationToken cancellationToken)
+    {
+        var basket = await _basketService.CreateAsync(cancellationToken);
+
+        return CreatedAtAction(nameof(GetById), new { id = basket.Id }, basket);
     }
 
     [HttpGet("{id:guid}")]
-    public ActionResult<BasketView> Get(Guid id) => Ok(store.GetBasket(id));
+    public async Task<ActionResult<BasketResponse>> GetById(Guid id, CancellationToken cancellationToken)
+    {
+        var basket = await _basketService.GetByIdAsync(id, cancellationToken);
+
+        return Ok(basket);
+    }
 
     [HttpPut("{id:guid}/items/{paintId:guid}")]
-    public ActionResult<BasketView> SetItem(Guid id, Guid paintId, QuantityRequest request) => Ok(store.SetItem(id, paintId, request.Quantity));
+    public async Task<ActionResult<BasketResponse>> SetItem(Guid id, Guid paintId, [FromBody] UpdateBasketItemRequest request, CancellationToken cancellationToken)
+    {
+        var basket = await _basketService.SetItemQuantityAsync(id, paintId, request, cancellationToken);
+
+        return Ok(basket);
+    }
 
     [HttpDelete("{id:guid}/items/{paintId:guid}")]
-    public IActionResult RemoveItem(Guid id, Guid paintId)
+    public async Task<IActionResult> RemoveItem(Guid id, Guid paintId, CancellationToken cancellationToken)
     {
-        store.RemoveItem(id, paintId);
+        await _basketService.RemoveItemAsync(id, paintId, cancellationToken);
+
         return NoContent();
     }
 
     [HttpDelete("{id:guid}/items")]
-    public IActionResult Clear(Guid id)
+    public async Task<IActionResult> Clear(Guid id, CancellationToken cancellationToken)
     {
-        store.ClearBasket(id);
+        await _basketService.ClearAsync(id, cancellationToken);
+
         return NoContent();
     }
 
     [HttpDelete("{id:guid}")]
-    public IActionResult Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        store.DeleteBasket(id);
+        await _basketService.DeleteAsync(id, cancellationToken);
+
         return NoContent();
     }
 }

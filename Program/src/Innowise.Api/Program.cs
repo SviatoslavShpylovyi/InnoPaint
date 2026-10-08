@@ -1,48 +1,66 @@
-using Innowise.Api;
-using Innowise.Application;
-using Innowise.Infrastructure.Persistence;
-using Innowise.Api.Assistant;
-using Microsoft.Extensions.AI;
+using BuildingBlocks.AspNetCore.Extensions;
+using BuildingBlocks.AspNetCore.Validation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.AI;
 using OpenAI.Chat;
+
+using Innowise.Application.Interfaces;
+using Innowise.Application.Services;
+using Innowise.Application.Validators;
+using Innowise.Infrastructure.Data;
+using Innowise.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
-builder.Services.AddProblemDetails();
-builder.Services.AddExceptionHandler<StoreExceptionHandler>();
-var connectionString = builder.Configuration.GetConnectionString("InnoPaint")
-    ?? throw new InvalidOperationException("Connection string 'InnoPaint' is not configured.");
-builder.Services.AddDbContextFactory<InnoPaintDbContext>(options => options.UseMySQL(connectionString));
-builder.Services.AddSingleton<IStoreRepository, EfStoreRepository>();
-builder.Services.AddSingleton<PaintStoreService>();
-builder.Services.AddHealthChecks().AddDbContextCheck<InnoPaintDbContext>();
+var connectionString = builder.Configuration.GetConnectionString("InnoPaint");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "Connection string 'InnoPaint' is missing. Configure it with user secrets or the ConnectionStrings__InnoPaint environment variable.");
+}
 
+builder.Services.AddDbContext<InnoPaintDbContext>(options => options.UseMySQL(connectionString));
+builder.Services.AddScoped<IPaintRepository, PaintRepository>();
+builder.Services.AddScoped<IBasketRepository, BasketRepository>();
+builder.Services.AddScoped<IStoreTransactionFactory, StoreTransactionFactory>();
+builder.Services.AddScoped<IPaintService, PaintService>();
+builder.Services.AddScoped<IBasketService, BasketService>();
+builder.Services.AddScoped<PaintCatalogTools>();
+builder.Services.AddScoped<IPaletteAssistantService, PaletteAssistantService>();
+builder.Services.AddSingleton<IChatClient>(services =>
+{
+    var configuration = services.GetRequiredService<IConfiguration>();
+
+    var apiKey = configuration["OpenAI:ApiKey"];
+    if (string.IsNullOrWhiteSpace(apiKey))
+    {
+        throw new InvalidOperationException(
+            "'OpenAI:ApiKey' is missing. Configure it with user secrets or the OpenAI__ApiKey environment variable.");
+    }
+
+    var model = configuration["OpenAI:Model"];
+    if (string.IsNullOrWhiteSpace(model))
+    {
+        throw new InvalidOperationException(
+            "'OpenAI:Model' is missing. Configure it with user secrets or the OpenAI__Model environment variable.");
+    }
+
+    return new ChatClient(model, apiKey).AsIChatClient();
+});
 builder.Services.AddMemoryCache();
 
- builder.Services.AddScoped<PaintCatalogTools>();
- builder.Services.AddScoped<PaletteAssistantService>();
- builder.Services.AddSingleton<IChatClient>(services =>
- {
-     var configuration =
-         services.GetRequiredService<IConfiguration>();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<GlobalValidateModelFilter>();
+});
 
-     var apiKey = configuration["OpenAI:ApiKey"]
-         ?? throw new InvalidOperationException(
-             "OpenAI:ApiKey is not configured.");
-
-     var model = configuration["OpenAI:Model"]
-         ?? throw new InvalidOperationException(
-             "OpenAI:Model is not configured.");
-
-     return new ChatClient(model, apiKey).AsIChatClient();
- });
-
+builder.Services.AddGlobalExceptionHandling();
+builder.Services.AddRequestValidation(typeof(CreatePaintRequestValidator).Assembly);
+builder.Services.AddHealthChecks().AddDbContextCheck<InnoPaintDbContext>();
 
 var app = builder.Build();
 
-app.UseExceptionHandler();
-app.UseStatusCodePages();
+app.UseGlobalExceptionHandling();
 
 if (!app.Environment.IsDevelopment())
 {

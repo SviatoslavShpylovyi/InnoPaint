@@ -1,36 +1,67 @@
-using Innowise.Application;
-using Innowise.Domain;
 using Microsoft.AspNetCore.Mvc;
+
+using Innowise.Application.DTOs.Requests;
+using Innowise.Application.DTOs.Responses;
+using Innowise.Application.Interfaces;
 
 namespace Innowise.Api.Controllers;
 
 [ApiController]
 [Route("api/paints")]
-public sealed class PaintsController(PaintStoreService store) : ControllerBase
+public sealed class PaintsController : ControllerBase
 {
+    private readonly IPaintService _paintService;
+
+    public PaintsController(IPaintService paintService)
+    {
+        _paintService = paintService;
+    }
+
     [HttpGet]
-    public ActionResult<PaintPage> Search([FromQuery] PaintQuery query) => Ok(store.Search(query));
+    public async Task<ActionResult<PaintPageResponse>> GetAll([FromQuery] PaintFilterRequest filter, CancellationToken cancellationToken)
+    {
+        var paints = await _paintService.GetAllAsync(filter, cancellationToken);
+
+        return Ok(paints);
+    }
 
     [HttpGet("lookups")]
-    public ActionResult<PaintLookups> Lookups() => Ok(store.Lookups());
+    public async Task<ActionResult<PaintLookupsResponse>> GetLookups(CancellationToken cancellationToken)
+    {
+        var lookups = await _paintService.GetLookupsAsync(cancellationToken);
+
+        return Ok(lookups);
+    }
 
     [HttpGet("{id:guid}")]
-    public ActionResult<Paint> Get(Guid id) => Ok(store.GetPaint(id));
+    public async Task<ActionResult<PaintResponse>> GetById(Guid id, CancellationToken cancellationToken)
+    {
+        var paint = await _paintService.GetByIdAsync(id, cancellationToken);
+
+        return Ok(paint);
+    }
 
     [HttpPost]
-    public ActionResult<Paint> Create(PaintRequest request)
+    public async Task<ActionResult<PaintResponse>> Create([FromBody] CreatePaintRequest request, CancellationToken cancellationToken)
     {
-        var paint = store.CreatePaint(request);
-        return CreatedAtAction(nameof(Get), new { id = paint.Id }, paint);
+        var paint = await _paintService.CreateAsync(request, cancellationToken);
+
+        return CreatedAtAction(nameof(GetById), new { id = paint.Id }, paint);
     }
 
     [HttpPut("{id:guid}")]
-    public ActionResult<Paint> Update(Guid id, PaintRequest request) => Ok(store.UpdatePaint(id, request));
+    public async Task<ActionResult<PaintResponse>> Update(Guid id, [FromBody] UpdatePaintRequest request, CancellationToken cancellationToken)
+    {
+        var paint = await _paintService.UpdateAsync(id, request, cancellationToken);
+
+        return Ok(paint);
+    }
 
     [HttpDelete("{id:guid}")]
-    public IActionResult Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        store.DeletePaint(id);
+        await _paintService.DeleteAsync(id, cancellationToken);
+
         return NoContent();
     }
 }
