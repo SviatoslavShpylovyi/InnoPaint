@@ -1,0 +1,73 @@
+# Full stack: MySQL, a one-shot migration job, the API and the web front end.
+#   cp .env.example .env   # then fill in the secrets
+#   docker compose up -d --build
+# Store: http://localhost:${WEB_PORT:-8080}
+# Release to a registry, then run anywhere with `docker compose pull && up -d`:
+#   REGISTRY=ghcr.io/<owner>/innopaint TAG=1.0.0 docker compose build
+#   REGISTRY=ghcr.io/<owner>/innopaint TAG=1.0.0 docker compose push
+
+services:
+  db:
+    image: mysql:8.4.11
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-InnoPaint}
+      MYSQL_USER: ${MYSQL_USER:-innopaint}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD in .env}
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  migrate:
+    image: ${REGISTRY:-innopaint}/migrate:${TAG:-latest}
+    build:
+      context: ./src
+      target: migrations
+    environment:
+      ConnectionStrings__InnoPaint: &connection "Server=db;Port=3306;Database=${MYSQL_DATABASE:-InnoPaint};User=${MYSQL_USER:-innopaint};Password=${MYSQL_PASSWORD}"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    image: ${REGISTRY:-innopaint}/api:${TAG:-latest}
+    build:
+      context: ./src
+      target: api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ConnectionStrings__InnoPaint: *connection
+      OpenAI__ApiKey: ${OPENAI_API_KEY:?set OPENAI_API_KEY in .env}
+      OpenAI__Model: ${OPENAI_MODEL:?set OPENAI_MODEL in .env}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  web:
+    image: ${REGISTRY:-innopaint}/web:${TAG:-latest}
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    # /health goes through nginx to the API and its DB check, so this covers
+    # the whole chain; the API image has no curl/wget of its own.
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      - api
+
+volumes:
+  db-data:
