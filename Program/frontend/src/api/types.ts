@@ -1,4 +1,4 @@
-// Mirrors src/Innowise.Application/StoreContracts.cs and Innowise.Domain/Paint.cs.
+// Mirrors src/Innowise.Application/DTOs and Innowise.Domain/Models.
 // ASP.NET Core serialises with camelCase, hence the casing here.
 
 export interface Paint {
@@ -66,7 +66,7 @@ export interface PaintQuery {
 /** Body for POST/PUT /api/paints. */
 export type PaintRequest = Omit<Paint, 'id'>
 
-// Mirrors src/Innowise.Api/Assistant/AssistantContracts.cs.
+// Mirrors the assistant DTOs in src/Innowise.Application/DTOs.
 
 /** One paint the assistant recommends, with its job in the scheme. */
 export interface PaletteItem {

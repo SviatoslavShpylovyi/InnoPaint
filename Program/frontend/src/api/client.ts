@@ -33,8 +33,8 @@ async function toError(response: Response): Promise<ApiError> {
   } catch {
     // A body that isn't JSON leaves the status line as the only detail.
   }
-  // Validation failures from [ApiController] put the useful text in `errors`;
-  // StoreException puts it in `detail`.
+  // Validation failures put the useful text in `errors`;
+  // a thrown AppException puts it in `detail`.
   const fieldMessage = problem.errors && Object.values(problem.errors).flat()[0]
   const message = problem.detail ?? fieldMessage ?? problem.title ?? response.statusText
   return new ApiError(response.status, message, problem.errors)

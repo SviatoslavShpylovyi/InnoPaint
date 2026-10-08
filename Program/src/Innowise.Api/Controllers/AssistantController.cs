@@ -1,20 +1,27 @@
-using Innowise.Api.Assistant;
 using Microsoft.AspNetCore.Mvc;
+
+using Innowise.Application.DTOs.Requests;
+using Innowise.Application.DTOs.Responses;
+using Innowise.Application.Interfaces;
 
 namespace Innowise.Api.Controllers;
 
 [ApiController]
 [Route("api/assistant")]
-public sealed class AssistantController(PaletteAssistantService assistant) : ControllerBase
+public sealed class AssistantController : ControllerBase
 {
-    [HttpPost("messages")]
-    public async Task<ActionResult<AssistantReply>> Send(AssistantRequest request, CancellationToken cancellationToken)
+    private readonly IPaletteAssistantService _paletteAssistantService;
+
+    public AssistantController(IPaletteAssistantService paletteAssistantService)
     {
-        if (string.IsNullOrWhiteSpace(request.Message))
-            return BadRequest("Message must not be blank");
-        var reply = await assistant.ReplyAsync(
-            request,
-            cancellationToken);
+        _paletteAssistantService = paletteAssistantService;
+    }
+
+    [HttpPost("messages")]
+    public async Task<ActionResult<AssistantReplyResponse>> Create([FromBody] SendAssistantMessageRequest request, CancellationToken cancellationToken)
+    {
+        var reply = await _paletteAssistantService.ReplyAsync(request, cancellationToken);
+
         return Ok(reply);
     }
 }
