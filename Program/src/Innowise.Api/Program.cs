@@ -62,12 +62,6 @@ var app = builder.Build();
 
 app.UseGlobalExceptionHandling();
 
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHsts();
-    app.UseHttpsRedirection();
-}
-
 app.MapControllers();
 app.MapHealthChecks("/health");
 
