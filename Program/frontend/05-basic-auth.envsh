@@ -1,0 +1,8 @@
+#!/bin/sh
+
+if [ -n "$BASIC_AUTH_HTPASSWD" ]; then
+    printf '%s\n' "$BASIC_AUTH_HTPASSWD" > /etc/nginx/.htpasswd
+    export BASIC_AUTH_REALM="InnoPaint dev"
+else
+    export BASIC_AUTH_REALM=off
+fi
