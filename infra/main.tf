@@ -20,6 +20,7 @@ resource "azurerm_log_analytics_workspace" "main" {
   resource_group_name = azurerm_resource_group.main.name
   sku                 = "PerGB2018"
   retention_in_days   = 30
+  daily_quota_gb      = 0.1
 
   tags = {
     project = "innopaint"
@@ -122,4 +123,97 @@ resource "azurerm_mysql_flexible_server_firewall_rule" "azure_services" {
 
 locals {
   mysql_connection_string = "Server=${azurerm_mysql_flexible_server.main.fqdn};Port=3306;Database=${azurerm_mysql_flexible_database.main.name};User=${var.mysql_admin_login};Password=${var.mysql_admin_password};SslMode=Required"
+}
+
+resource "azurerm_container_app" "api" {
+  name                         = "api"
+  resource_group_name          = azurerm_resource_group.main.name
+  container_app_environment_id = azurerm_container_app_environment.main.id
+  revision_mode                = "Single"
+  workload_profile_name        = "Consumption"
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.pull.id]
+  }
+
+  registry {
+    server   = azurerm_container_registry.main.login_server
+    identity = azurerm_user_assigned_identity.pull.id
+  }
+
+  secret {
+    name  = "connection-string"
+    value = local.mysql_connection_string
+  }
+
+  secret {
+    name  = "openai-api-key"
+    value = var.openai_api_key
+  }
+
+  template {
+    min_replicas = 0
+    max_replicas = 1
+
+    container {
+      name   = "api"
+      image  = "${azurerm_container_registry.main.login_server}/innopaint/api:${var.image_tag}"
+      cpu    = 0.25
+      memory = "0.5Gi"
+
+      env {
+        name        = "ConnectionStrings__InnoPaint"
+        secret_name = "connection-string"
+      }
+
+      env {
+        name        = "OpenAI__ApiKey"
+        secret_name = "openai-api-key"
+      }
+
+      env {
+        name  = "OpenAI__Model"
+        value = var.openai_model
+      }
+
+      env {
+        name  = "ASPNETCORE_ENVIRONMENT"
+        value = "Production"
+      }
+
+      readiness_probe {
+        transport = "HTTP"
+        path      = "/health"
+        port      = 8080
+        timeout   = 5
+      }
+    }
+  }
+
+  ingress {
+    external_enabled           = false
+    allow_insecure_connections = true
+    target_port                = 8080
+
+    traffic_weight {
+      percentage      = 100
+      latest_revision = true
+    }
+  }
+
+  lifecycle {
+    ignore_changes = [
+      template[0].container[0].image
+    ]
+  }
+
+  depends_on = [
+    azurerm_role_assignment.acr_pull
+  ]
+
+  tags = {
+    project = "innopaint"
+    env     = "dev"
+  }
 }
