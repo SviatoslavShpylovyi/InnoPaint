@@ -1,0 +1,10 @@
+# Copy to dev.tfvars (gitignored) and fill in real values.
+# Secrets are NOT set here; use TF_VAR_mysql_admin_password,
+# TF_VAR_openai_api_key and TF_VAR_basic_auth_htpasswd env vars.
+
+subscription_id   = "00000000-0000-0000-0000-000000000000" # az account show --query id -o tsv
+location          = "polandcentral"                       # subscription policy allows only 5 regions
+prefix            = "innopaint-dev"
+allowed_ips       = ["203.0.113.10/32"]                   # your public IP, https://api.ipify.org
+mysql_admin_login = "innopaintadmin"                      # not admin/root/administrator
+github_repo       = "SviatoslavShpylovyi/InnoPaint"

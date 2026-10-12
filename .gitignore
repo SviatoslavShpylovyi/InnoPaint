@@ -79,3 +79,11 @@ pnpm-debug.log*
 .vscode/
 .idea/
 *.swp
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+crash.log
+# Real values (subscription ID, personal IP) stay local; see dev.tfvars.example
+infra/environments/*.tfvars

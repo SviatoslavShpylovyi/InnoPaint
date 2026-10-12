@@ -58,6 +58,9 @@ services:
     restart: unless-stopped
     ports:
       - "${WEB_PORT:-8080}:80"
+    # Empty by default: basic auth stays off locally.
+    environment:
+      BASIC_AUTH_HTPASSWD: ${BASIC_AUTH_HTPASSWD:-}
     # /health goes through nginx to the API and its DB check, so this covers
     # the whole chain; the API image has no curl/wget of its own.
     healthcheck:
