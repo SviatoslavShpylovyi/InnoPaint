@@ -1,0 +1,79 @@
+name: deploy-dev
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false
+
+env:
+  RESOURCE_GROUP: rg-innopaint-dev
+  ACR_NAME: ${{ secrets.ACR_NAME }}
+  MYSQL_SERVER: ${{ secrets.MYSQL_SERVER }}
+  REGISTRY: ${{ secrets.ACR_NAME }}.azurecr.io/innopaint
+  TAG: ${{ github.sha }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install Container Apps CLI extension
+        run: az extension add -n containerapp --upgrade
+
+      - name: Build and push images
+        working-directory: Program
+        env:
+          MYSQL_ROOT_PASSWORD: unused
+          MYSQL_PASSWORD: unused
+          OPENAI_API_KEY: unused
+          OPENAI_MODEL: unused
+        run: |
+          az acr login -n "$ACR_NAME"
+          docker compose build migrate api web
+          docker compose push migrate api web
+
+      - name: Start MySQL if stopped
+        run: |
+          state=$(az mysql flexible-server show -n "$MYSQL_SERVER" -g "$RESOURCE_GROUP" --query state -o tsv)
+          if [ "$state" != "Ready" ]; then
+            az mysql flexible-server start -n "$MYSQL_SERVER" -g "$RESOURCE_GROUP"
+          fi
+
+      - name: Run migrations
+        run: |
+          az containerapp job update -n migrate -g "$RESOURCE_GROUP" --image "$REGISTRY/migrate:$TAG"
+          execution=$(az containerapp job start -n migrate -g "$RESOURCE_GROUP" --query name -o tsv)
+          echo "Started $execution"
+          for i in $(seq 1 60); do
+            status=$(az containerapp job execution show -n migrate -g "$RESOURCE_GROUP" \
+              --job-execution-name "$execution" --query properties.status -o tsv)
+            echo "Status: $status"
+            case "$status" in
+              Succeeded) exit 0 ;;
+              Failed|Stopped|Degraded) exit 1 ;;
+            esac
+            sleep 10
+          done
+          echo "Timed out waiting for the migration"
+          exit 1
+
+      - name: Update api
+        run: az containerapp update -n api -g "$RESOURCE_GROUP" --image "$REGISTRY/api:$TAG"
+
+      - name: Update web
+        run: az containerapp update -n web -g "$RESOURCE_GROUP" --image "$REGISTRY/web:$TAG"
