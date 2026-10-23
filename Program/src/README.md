@@ -1,6 +1,6 @@
-# Innowise
+# InnoPaint backend notes
 
-ASP.NET Core Web API starter using Clean Architecture and .NET 10.
+ASP.NET Core Web API (.NET 10) with Clean Architecture. Commands below run from `Program/`.
 
 ## Structure
 
@@ -12,7 +12,7 @@ src/
     BuildingBlocks.AspNetCore/    # Exception handler, validation filter, DI extensions
   Innowise.Domain/          # Models/ - entities and business rules
   Innowise.Application/     # DTOs/, Interfaces/, Services/, Mappings/, Validators/, Exceptions/
-  Innowise.Infrastructure/  # Data/, Repositories/, Migrations/, Concurrency/
+  Innowise.Infrastructure/  # Data/, Repositories/, Migrations/
   Innowise.Api/             # HTTP controllers, middleware, dependency injection
 ```
 
@@ -45,10 +45,9 @@ Request bodies and query strings are validated by FluentValidation validators in
 are typed exceptions derived from `AppException`; one `IExceptionHandler` turns
 them into Problem Details.
 
-## Run
+## Run without Docker
 
-Install the .NET 10 SDK and a local MySQL 8 server, then run from the repository root.
-The API reads the `ConnectionStrings:InnoPaint` setting, kept in .NET user secrets
+Install the .NET 10 SDK and a local MySQL 8 server. The API reads the `ConnectionStrings:InnoPaint` setting, kept in .NET user secrets
 for development:
 
 ```sh
@@ -95,11 +94,23 @@ Lookups cover the entire catalog.
 | DELETE | `/api/baskets/{id}/items` | Clear the basket |
 | DELETE | `/api/baskets/{id}` | Delete the basket |
 
-Quantities must be positive and cannot exceed paint stock. Baskets do not reserve
-or decrement stock; checkout is not implemented. Totals use current catalog
-prices. Stock updates below a quantity already in a basket return 409.
-Invalid input returns 400, missing resources return 404, and insufficient stock
-returns 409, using Problem Details. Successful deletes return 204.
+## Business rules
+
+1. A basket quantity must be between 1 and the paint's current stock. More than stock returns 409.
+2. `PUT` on a basket item replaces its quantity; it does not add to it.
+3. Baskets never reserve or decrement stock. Checkout is not implemented.
+4. A paint update cannot drop stock below a quantity already in a basket (409).
+5. Deleting a paint removes it from every basket first.
+6. Basket totals are computed on every read from current catalog prices.
+
+Invalid input returns 400, missing resources return 404, and stock conflicts
+return 409, all as Problem Details. Successful deletes return 204.
+
+## Assistant endpoint
+
+| Method | Path | Behavior |
+| --- | --- | --- |
+| POST | `/api/assistant/messages` | Send a message to the palette assistant; needs `OpenAI:ApiKey` and `OpenAI:Model` |
 
 Run the HTTP smoke checks against a running development instance:
 
@@ -109,8 +120,8 @@ python tests/store_smoke.py
 
 For local HTTPS, trust the development certificate with
 `dotnet dev-certs https --trust`, then use `--launch-profile https`.
-HTTPS redirection and HSTS are enabled outside Development. Configure a valid
-HTTPS endpoint or proxy HTTPS settings when deploying.
+In Azure, TLS ends at the Container Apps ingress; the API restores the original
+scheme and client IP from `X-Forwarded-*` headers (`UseForwardedHeaders`).
 
 Unhandled errors and empty error responses use ASP.NET Core Problem Details.
 Configuration lives in `appsettings.json` and `appsettings.Development.json`;

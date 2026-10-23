@@ -25,7 +25,7 @@ npm run lint    # oxlint
 
 | Path | Holds |
 | --- | --- |
-| `src/api/types.ts` | Mirrors `StoreContracts.cs` and `Paint.cs`, camelCased |
+| `src/api/types.ts` | Mirrors the API DTOs in `Innowise.Application/DTOs/`, camelCased |
 | `src/api/client.ts` | Every endpoint, plus `ApiError` carrying the Problem Details status and message |
 | `src/hooks/useBasket.ts` | The one basket for this browser; its id lives in localStorage |
 | `src/lib/color.ts` | Turns a `color` name into a swatch hex, hashing unknown names |
